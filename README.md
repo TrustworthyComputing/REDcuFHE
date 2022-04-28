@@ -1,5 +1,5 @@
 # (RED)cuFHE: Evolution of FHE acceleration for Multi-GPUs
-The (RED)cuFHE library is major overhaul of [cuFHE](https://github.com/vernamlab/cuFHE), and offers GPU acceleration of homomorphic operations accross multiple GPUs for the first time. The library implements the [TFHE](https://tfhe.github.io/tfhe/)
+The (RED)cuFHE library is major overhaul of [cuFHE](https://github.com/vernamlab/cuFHE), and offers GPU acceleration of homomorphic operations accross multiple GPUs. The library implements the [TFHE](https://tfhe.github.io/tfhe/)
 cryptosystem, with support for leveled arithmetic operations over encrypted integers, encryptions of constant values, support for an arbitrary numbers of GPUs with dynamic scheduling, as well as new and robust I/O. 
 
 ## Prerequisites
@@ -14,7 +14,7 @@ driver version 470.103.01 and CUDA Toolkit 11.4.
 2. Navigate to `redcufhe/` and run `make`
 3. Move the generated shared library (`/bin/libredcufhe.so`) to a desired location and update the `LD_LIBRARY_PATH` environment variable if necessary.
 
-## Examples
+## How to get started with (RED)cuFHE
 We provide two programs in the `examples/` directory that showcase both leveled
 arithmetic operations and gate operations on an arbitrary number of GPUs. Both
 programs also include an easily extensible dynamic scheduler (which runs on a
