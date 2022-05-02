@@ -1,4 +1,7 @@
 /**
+ * 
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,6 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+
 /**
  * @file cufhe.h
  * @brief This is the user API of the cuFHE library.
@@ -29,7 +33,7 @@
 
 #pragma once
 
-#include "cufhe.h"
+#include "redcufhe.h"
 
 namespace redcufhe {
 
@@ -69,13 +73,13 @@ void Not (Ctxt& out, const Ctxt& in, Stream st = 0);
 void Copy(Ctxt& out, const Ctxt& in, Stream st = 0);
 
 // Trivial Encryption
-void Constant(Ctxt& result, int32_t value);
+void ConstantRed(Ctxt& result, int32_t value);
 
 // Arithmetic Operations
-void Add(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
+void AddRed(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
 Stream st = 0);
-void Sub(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
+void SubRed(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
 Stream st = 0);
-void MulConst(Ctxt& prod, const Ctxt& in, uint16_t constVal);
+void MulConstRed(Ctxt& prod, const Ctxt& in, uint16_t constVal);
 
 } // namespace redcufhe

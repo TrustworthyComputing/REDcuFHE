@@ -1,4 +1,26 @@
-#include <include/cufhe_gpu.cuh>
+/**
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#include <include/redcufhe_gpu.cuh>
 #include <include/details/error_gpu.cuh>
 
 using namespace redcufhe;
@@ -19,7 +41,11 @@ using namespace std::chrono;
 PriKey pri_key;
 uint32_t kNumTests;
 PubKey bk;
+
+// shared vector used to issue/receive commands
 vector<vector<pair<int, int>>> requests;
+
+// plaintext modulus
 uint32_t message_space = 256;
 
 void AddCheck(int32_t& out, const int32_t& in0, const int32_t& in1) {
@@ -28,34 +54,42 @@ void AddCheck(int32_t& out, const int32_t& in0, const int32_t& in1) {
 
 void setup(uint32_t kNumSMs, Ctxt** inputs, int32_t** pt, Stream** st, int idx) {
   cudaSetDevice(idx);
+
+  // send bootstrapping key to GPU
   Initialize(bk);
 
+  // create CUDA streams for the GPU
   st[idx] = new Stream[kNumSMs];
   for (int i = 0; i < kNumSMs; i++) {
     st[idx][i].Create();
   }
   Synchronize();
 
+  // Allocate memory for ciphertexts and encrypt
   (*inputs) = new Ctxt[2 * kNumTests];
   for (int i = 0; i < 2 * kNumTests; i++) {
-    EncryptInt((*inputs)[i], pt[idx][i], message_space, pri_key);
+    EncryptIntRed((*inputs)[i], pt[idx][i], message_space, pri_key);
   }
   Synchronize();
   return;
 }
 
+// Runs on a worker CPU thread controlling a GPU
 void server(int shares, uint32_t kNumSMs, int idx, Ctxt** answers, Stream** st) {
-  // make sure setup succeeded
   while(1) {
     for (int i = 0; i < shares; i++) {
-      if (requests[idx][i].first != -1) { // check if input has been loaded
+      // check for assignment
+      if (requests[idx][i].first != -1) { 
+        // terminate upon kill signal (-2)
         if (requests[idx][i].first == -2) { 
           Synchronize(); 
           return; 
-        } // kill signal
-        Add((*answers)[requests[idx][i].second], (*answers)[requests[idx][i].second], (*answers)[requests[idx][i].first], st[idx][i % kNumSMs]);
-        requests[idx][i].first = -1; // clear input
-        requests[idx][i].second = -1; //clear index
+        }
+        // Perform leveled addition
+        AddRed((*answers)[requests[idx][i].second], (*answers)[requests[idx][i].second], (*answers)[requests[idx][i].first], st[idx][i % kNumSMs]);
+        // clear assignment
+        requests[idx][i].first = -1;
+        requests[idx][i].second = -1;
       }
     }
   }
@@ -75,26 +109,30 @@ int main() {
   int numGPUs = 0;
   cudaGetDeviceCount(&numGPUs);
 
-  int32_t* pt[numGPUs];
+  // create 2D array of plaintext and streams
+  int32_t* pt[numGPUs]; // int is used instead of binary Ptxt
   Stream* st[numGPUs];
+
   // generate keyset
   SetSeed();
   PriKeyGen(pri_key);
   PubKeyGen(bk, pri_key);
 
   for (int i = 0; i < numGPUs; i++) {
-  // generate random ptxts (bits)
+  // generate random ptxts (integers) for each GPU
     pt[i] = new int32_t[2 * kNumTests];
     for (int j = 0; j < 2 * kNumTests; j++) {
       pt[i][j] = rand() % (message_space / 2);
     }
   }
 
-  int num_threads = numGPUs; // 1 worker per GPU + master thread
+  // Initialize shared vector for thread communication
+  int num_threads = numGPUs;
   requests.resize(num_threads);
   for (int i = 0; i < num_threads; i++) {
     requests[i].resize(kNumTests);
     for (int j = 0; j < kNumTests; j++) {
+      // each element holds indices of data array
       requests[i][j] = make_pair(-1,-1);
     }
   }
@@ -102,13 +140,24 @@ int main() {
   Ctxt* answers[numGPUs];
   omp_set_num_threads(numGPUs);
 
+  // Initialize data on each available GPU
   #pragma omp parallel for shared(st, answers)
   for (int i = 0; i < numGPUs; i++) {
     setup(kNumSMs, &answers[i], pt, st, i);
   }
 
+  // one worker thread for each GPU and a scheduler thread
   omp_set_num_threads(numGPUs+1);
+
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
+  /////////////////////////////////////////
+  //
+  // (RED)cuFHE Dynamic Scheduler
+  // Enables automatic allocation of FHE 
+  // workloads to multiple GPUs
+  //
+  //////////////////////////////////////////   
   #pragma omp parallel for shared(answers, st, requests)
   for (int i = 0; i < (num_threads+1); i++) {
     if (i != 0) { // workers
@@ -118,15 +167,17 @@ int main() {
       Synchronize();
     }
     else { // master thread
-      int turn = 1;
+      int turn = 1; // indicates target worker 
       for (int j = 0; j < (kNumTests*numGPUs); j++) {
         if ((j % kNumTests == 0) && (j > 0)) {
-          turn++; // assign work to next GPU
-          if (turn > num_threads) { // excludes thread 0
+          turn++; // assign to next worker
+          if (turn > num_threads) { // excludes scheduler
             turn = 1;
           }
         }
+        // assign input 1 as index j of GPU array
         requests[turn-1][j % kNumTests].second = j % (kNumTests);
+        // assign input 2 as index j+kNumTests
         requests[turn-1][j % kNumTests].first = ((j%kNumTests)+kNumTests) % (2*kNumTests);
       }
       // check to see if all threads are done
@@ -153,6 +204,7 @@ int main() {
 
   cout << "Arithmetic evals: " << kNumTests*numGPUs << endl;
 
+  // Confirm results and check for errors
   int wrong_counter[numGPUs];
   omp_set_num_threads(numGPUs);
   #pragma omp parallel shared(wrong_counter)
@@ -162,7 +214,7 @@ int main() {
     cudaSetDevice(thread_num);
     for (int i = 0; i < kNumTests; i++) {
       AddCheck(pt[thread_num][i], pt[thread_num][i+kNumTests], pt[thread_num][i]);
-      DecryptInt(recovered_pt[i], answers[thread_num][i+kNumTests], message_space, pri_key);
+      DecryptIntRed(recovered_pt[i], answers[thread_num][i+kNumTests], message_space, pri_key);
     }
     wrong_counter[thread_num] = 0;
     for (int i = 0; i < kNumTests; i++) {
@@ -185,6 +237,7 @@ int main() {
   for (int i = 0; i < numGPUs; i++) {
     delete [] pt[i];
   }
+  // free GPU memory
   CleanUp();
 
   return 0;

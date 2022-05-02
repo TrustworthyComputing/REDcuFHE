@@ -1,4 +1,6 @@
 /**
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "../include/cufhe.h"
+
+#include "../include/redcufhe.h"
 #include "../include/cufhe_core.h"
 #include <fstream>
 
@@ -72,13 +75,13 @@ void ReadPubKeyFromFile(PubKey& pub_key, FileName file) {
   stream.close();
 }
 
-void WriteCtxtToFile(const Ctxt& ct, FileName file) {
+void WriteCtxtToFileRed(const Ctxt& ct, FileName file) {
   std::ofstream stream(file, std::ios_base::app);
   WriteStream<Torus>(stream, *ct.lwe_sample_);
   stream.close();
 }
 
-void ReadCtxtFromFile(Ctxt& ct, std::ifstream& stream) {
+void ReadCtxtFromFileRed(Ctxt& ct, std::ifstream& stream) {
   ReadStream<Torus>(*ct.lwe_sample_, stream);
 }
 

@@ -54,9 +54,9 @@ $(DIR_OBJ)/examples/multigpu_arithmetic_example.o: examples/multigpu_arithmetic_
 	$(CU) $(FLAGS) $(CU_FLAGS) $(INC) -M -o $(@:%.o=%.d) $< -Xcompiler -fopenmp
 	$(CU) $(FLAGS) $(CU_FLAGS) $(INC) -c -o $@ $< -Xcompiler -fopenmp
 
-$(DIR_BIN)/libredcufhe.so: $(CU_OBJ) $(DIR_OBJ)/cufhe.o $(DIR_OBJ)/cufhe_io.o
+$(DIR_BIN)/libredcufhe.so: $(CU_OBJ) $(DIR_OBJ)/redcufhe.o $(DIR_OBJ)/redcufhe_io.o
 	$(dir_guard)
-	$(CU) $(FLAGS) $(CU_FLAGS) -shared -o $@ $(CU_OBJ) $(DIR_OBJ)/cufhe.o $(DIR_OBJ)/cufhe_io.o
+	$(CU) $(FLAGS) $(CU_FLAGS) -shared -o $@ $(CU_OBJ) $(DIR_OBJ)/redcufhe.o $(DIR_OBJ)/redcufhe_io.o
 
 $(CC_OBJ): $(CC_SRC)
 	$(dir_guard)

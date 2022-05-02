@@ -1,4 +1,6 @@
 /**
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,9 +22,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <include/cufhe.h>
-#include <include/cufhe_gpu.cuh>
-#include <include/bootstrap_gpu.cuh>
+#include <include/redcufhe.h>
+#include <include/redcufhe_gpu.cuh>
+#include <include/redcufhe_bootstrap_gpu.cuh>
 
 namespace redcufhe {
 
@@ -151,7 +153,7 @@ void NoiselessTrivial(Ctxt& result, Torus mu){
   result.lwe_sample_->b() = mu;
 }
 
-void Constant(Ctxt& result, int32_t value) {
+void ConstantRed(Ctxt& result, int32_t value) {
   static const Torus mu = ModSwitchToTorus(1, 8);
   NoiselessTrivial(result, value ? mu : -mu);
 }
@@ -164,7 +166,7 @@ void AddOp(Torus* out, Torus* in0, Torus* in1, uint32_t n) {
   }
 }
 
-void Add(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
+void AddRed(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
 Stream st) {
   CtxtCopyH2D(in0, st);
   CtxtCopyH2D(in1, st);
@@ -181,7 +183,7 @@ void SubOp(Torus* out, Torus* in0, Torus* in1, uint32_t n) {
   }
 }
 
-void Sub(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
+void SubRed(Ctxt& out, const Ctxt& in0, const Ctxt& in1, 
 Stream st) {
   CtxtCopyH2D(in0, st);
   CtxtCopyH2D(in1, st);
@@ -190,7 +192,7 @@ Stream st) {
   CtxtCopyD2H(out, st);
 }
 
-void MulConst(Ctxt& prod, const Ctxt& in, uint16_t constVal) {
+void MulConstRed(Ctxt& prod, const Ctxt& in, uint16_t constVal) {
   for (int i = 0; i < in.lwe_sample_->n(); i++) {
     prod.lwe_sample_->data()[i] = in.lwe_sample_->data()[i]*constVal;
   }

@@ -1,4 +1,5 @@
 /**
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <include/cufhe.h>
+#include <include/redcufhe.h>
 #include <include/details/allocator_gpu.cuh>
 
 namespace redcufhe {

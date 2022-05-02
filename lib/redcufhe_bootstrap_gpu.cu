@@ -1,4 +1,6 @@
 /**
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <include/bootstrap_gpu.cuh>
+
+#include <include/redcufhe_bootstrap_gpu.cuh>
 #include <include/ntt_gpu/ntt.cuh>
 #include <include/details/error_gpu.cuh>
 

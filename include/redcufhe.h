@@ -1,4 +1,7 @@
 /**
+ * 
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,6 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
 
 /**
  * @file cufhe.h
@@ -136,9 +140,9 @@ void PriKeyGen(PriKey& pri_key);
 void PubKeyGen(PubKey& pub_key, const PriKey& pri_key);
 void KeyGen(PubKey& pub_key, PriKey& pri_key);
 void Encrypt(Ctxt& ctxt, const Ptxt& ptxt, const PriKey& pri_key);
-void EncryptInt(Ctxt& ctxt, const int32_t ptxt, const uint32_t msg_space, const PriKey& pri_key);
+void EncryptIntRed(Ctxt& ctxt, const int32_t ptxt, const uint32_t msg_space, const PriKey& pri_key);
 void Decrypt(Ptxt& ptxt, const Ctxt& ctxt, const PriKey& pri_key);
-void DecryptInt(int32_t& ptxt, const Ctxt& ctxt, const uint32_t msg_space, const PriKey& pri_key);
+void DecryptIntRed(int32_t& ptxt, const Ctxt& ctxt, const uint32_t msg_space, const PriKey& pri_key);
 
 /******************
  * I/O Methods *
@@ -148,8 +152,8 @@ void WritePriKeyToFile(const PriKey& pri_key, FileName file);
 void ReadPriKeyFromFile(PriKey& pri_key, FileName file);
 void WritePubKeyToFile(const PubKey& pub_key, FileName file);
 void ReadPubKeyFromFile(PubKey& pub_key, FileName file);
-void WriteCtxtToFile(const Ctxt& ct, FileName file);
-void ReadCtxtFromFile(Ctxt& ct, std::ifstream& in);
+void WriteCtxtToFileRed(const Ctxt& ct, FileName file);
+void ReadCtxtFromFileRed(Ctxt& ct, std::ifstream& in);
 
 } // namespace redcufhe
 

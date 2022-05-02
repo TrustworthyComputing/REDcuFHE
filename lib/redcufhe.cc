@@ -1,4 +1,6 @@
 /**
+ * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
+ * 
  * Copyright 2018 Wei Dai <wdai3141@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <include/cufhe.h>
+
+#include <include/redcufhe.h>
 #include <include/details/allocator_cpu.h>
 
 #include <math.h>
@@ -343,7 +346,7 @@ void KeyGen(PubKey& pub_key, PriKey& pri_key) {
   PubKeyGen(pub_key, pri_key);
 }
 
-void EncryptInt(Ctxt& ctxt, const int32_t ptxt, const uint32_t msg_space, const PriKey& pri_key) {
+void EncryptIntRed(Ctxt& ctxt, const int32_t ptxt, const uint32_t msg_space, const PriKey& pri_key) {
   Torus val = ModSwitchToTorus(ptxt, msg_space);
   LWEEncrypt(ctxt.lwe_sample_, val, pri_key.lwe_key_);
 }
@@ -362,7 +365,7 @@ int32_t modSwitchFromTorus(Torus phase, int32_t Msize){
     return phase64/interv;
 }
 
-void DecryptInt(int32_t& ptxt, const Ctxt& ctxt, const uint32_t msg_space, const PriKey& pri_key) {
+void DecryptIntRed(int32_t& ptxt, const Ctxt& ctxt, const uint32_t msg_space, const PriKey& pri_key) {
   Torus mu; 
   LWEDecrypt(mu, ctxt.lwe_sample_, pri_key.lwe_key_, msg_space);
   mu = ApproxPhase(mu, (int32_t)msg_space);
