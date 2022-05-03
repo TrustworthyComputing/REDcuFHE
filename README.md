@@ -11,12 +11,12 @@ driver version 470.103.01 and CUDA Toolkit 11.4.
 
 ## Installation Instructions (Linux Only)
 1. Clone the repo:  `git clone https://github.com/TrustworthyComputing/REDcuFHE.git`
-2. Navigate to root directory: `cd REDcuFHE`
-3. Build the library: `make`
-4. Move the generated shared library to a desired location (e.g. `sudo cp
+2. _(Optional)_ Update `REDcuFHE/lib/redcufhe_bootstrap_gpu.cu:33` with the maximum GPUs of the target system (default is 8)
+3. Navigate to root directory: `cd REDcuFHE`
+4. Build the library: `make`
+5. Move the generated shared library to a desired location (e.g. `sudo cp
    /bin/libredcufhe.so /usr/local/lib/`) and update the `LD_LIBRARY_PATH`
-   environment variable if necessary (e.g. `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib`).
-5. Update `lib/redcufhe_bootstrap_gpu.cu:33` with the maximum GPUs of the target system (default is 8).
+   environment variable if necessary (e.g., `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib`).
 
 ## (RED)cuFHE API
 
