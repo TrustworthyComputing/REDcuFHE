@@ -1,11 +1,11 @@
 # (RED)cuFHE: Evolution of FHE acceleration for Multi-GPUs  <a href="https://github.com/TrustworthyComputing/REDcuFHE/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a> </h1>
-The (RED)cuFHE library is major overhaul of [cuFHE](https://github.com/vernamlab/cuFHE), and offers GPU acceleration of homomorphic operations accross multiple GPUs. The library implements the [TFHE](https://tfhe.github.io/tfhe/)
-cryptosystem, with support for leveled arithmetic operations over encrypted integers, encryptions of constant values, support for an arbitrary numbers of GPUs with dynamic scheduling, as well as new and robust I/O. 
+The (RED)cuFHE library is major overhaul of [cuFHE](https://github.com/vernamlab/cuFHE), and offers scalable GPU acceleration of homomorphic operations across multiple GPUs. The library implements the [TFHE](https://tfhe.github.io/tfhe/)
+cryptosystem, with support for leveled arithmetic operations over encrypted integers, encryptions of constant values, support for an arbitrary numbers of GPUs with dynamic scheduling, as well as new and robust I/O.
 
 ## Prerequisites
 (RED)cuFHE currently supports NVIDIA GPUs; the NVIDIA Driver, NVIDIA CUDA
 Toolkit and a GPU with **Compute Capability no less than 6.0** are required
-(same restrictions its cuFHE predecessor). 
+(same restrictions its cuFHE predecessor).
 The library was tested with 8x T4 GPUs (Compute Capability 7.5) with
 driver version 470.103.01 and CUDA Toolkit 11.4.
 
@@ -16,8 +16,9 @@ driver version 470.103.01 and CUDA Toolkit 11.4.
 4. Move the generated shared library to a desired location (e.g. `sudo cp
    /bin/libredcufhe.so /usr/local/lib/`) and update the `LD_LIBRARY_PATH`
    environment variable if necessary (e.g. `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib`).
+5. Update `lib/redcufhe_bootstrap_gpu.cu:33` with the maximum GPUs of the target system (default is 8).
 
-## (RED)cuFHE API 
+## (RED)cuFHE API
 
 ### Key Generation
 ```c++
@@ -31,7 +32,7 @@ KeyGen(pk, sk); // generate public and private keys
 ```c++
 Ctxt ct;
 Ptxt pt; // Ptxt objects can encode binary values
-pt = 1; 
+pt = 1;
 Encrypt(ct, pt, sk);
 Decrypt(pt, ct, sk);
 ConstantRed(ct_out, pt); // Trivial encryption using pk
@@ -73,37 +74,35 @@ WritePriKeyToFile(sk, filename);
 ReadPriKeyFromFile(sk, filename);
 WritePubKeyToFile(pk, filename);
 ReadPubKeyFromFile(pk, filename);
-for (int i = 0; i < num_ctxts; i++) {
-  WriteCtxtToFileRed(ct[i], filename); // appends to file
-}
-for (int i = 0; i < num_ctxts; i++) {
-  ReadCtxtFromFileRed(ct[i], filename); // keeps state
-}
+WriteCtxtToFileRed(ct[i], filename); // append ciphertext i to a file; supports multiple ciphertexts in the same file
+ReadCtxtFromFileRed(ct, filestream); // read next ciphertext from an ifstream object; supports multiple ciphertexts in the same file
 ```
 
 ## Performance Comparison
 
 |   Library  | Gate Cost | Speedup (relative to CPU) |
 |:----------:|:---------:|:-------------------------:|
-| (RED)cuFHE* |  0.048 ms |            271X           |
-|    cuFHE   |   0.5 ms  |            26X            |
-|    TFHE    |   13 ms   |             1X            |
+| (RED)cuFHE |  0.048 ms |            227X           |
+|    cuFHE  |   0.37 ms  |            29X            |
+|    TFHE*   |   10.9 ms   |             1X            |
 
-*Experiments ran on a g4dn.metal AWS instance
+All experiments performed on a g4dn.metal AWS instance.
+*Uses SPQLIOS-FMA as the FFT engine.
+
 ## How to get started with (RED)cuFHE
 We provide [two programs](examples/) that showcase both leveled
 arithmetic operations and gate operations on an arbitrary number of GPUs. Both
-programs also include an easily extensible dynamic scheduler (which runs on a
+programs also incorporate our easily extensible **Dynamic Scheduler** (which runs on a
 dedicated CPU thread). Each available GPU is controlled by a CPU thread which
 receives orders from the scheduler and issues orders to its partner GPU in turn.
 The executables for these two examples will be generated
-during the `make` step and can be found in `bin/`. 
+during the `make` step and can be found in `bin/`.
 
 ### [Example 1](examples/multigpu_gates_example.cu): Multi-GPU Bootstrapped Gates
 This example illustrates scaling gate
 evaluations to multiple GPUs and can achieve much higher throughput than
-baseline cuFHE. 
-### [Example 2](examples/multigpu_arithmetic_example.cu): Multi-GPU Leveled Arithmetic Operations 
+baseline cuFHE.
+### [Example 2](examples/multigpu_arithmetic_example.cu): Multi-GPU Leveled Arithmetic Operations
 This example highlights the new leveled features in the integer domain. Instead
 of operating over encrypted bits, which is required in cuFHE, (RED)cuFHE allows
 for operations over encrypted modular integers.

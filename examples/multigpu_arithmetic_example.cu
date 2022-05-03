@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2022 TrustworthyComputing - Charles Gouert
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -19,6 +19,16 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+//
+// Multi-GPU Leveled Arithmetic Operations example
+//
+// This example highlights the new leveled
+// features in the integer domain. Instead
+// of operating over encrypted bits, which
+// is required in cuFHE, (RED)cuFHE allows
+// for operations over encrypted modular integers.
+//
 
 #include <include/redcufhe_gpu.cuh>
 #include <include/details/error_gpu.cuh>
@@ -79,11 +89,11 @@ void server(int shares, uint32_t kNumSMs, int idx, Ctxt** answers, Stream** st) 
   while(1) {
     for (int i = 0; i < shares; i++) {
       // check for assignment
-      if (requests[idx][i].first != -1) { 
+      if (requests[idx][i].first != -1) {
         // terminate upon kill signal (-2)
-        if (requests[idx][i].first == -2) { 
-          Synchronize(); 
-          return; 
+        if (requests[idx][i].first == -2) {
+          Synchronize();
+          return;
         }
         // Perform leveled addition
         AddRed((*answers)[requests[idx][i].second], (*answers)[requests[idx][i].second], (*answers)[requests[idx][i].first], st[idx][i % kNumSMs]);
@@ -154,10 +164,10 @@ int main() {
   /////////////////////////////////////////
   //
   // (RED)cuFHE Dynamic Scheduler
-  // Enables automatic allocation of FHE 
+  // Enables automatic allocation of FHE
   // workloads to multiple GPUs
   //
-  //////////////////////////////////////////   
+  /////////////////////////////////////////
   #pragma omp parallel for shared(answers, st, requests)
   for (int i = 0; i < (num_threads+1); i++) {
     if (i != 0) { // workers
@@ -167,7 +177,7 @@ int main() {
       Synchronize();
     }
     else { // master thread
-      int turn = 1; // indicates target worker 
+      int turn = 1; // indicates target worker
       for (int j = 0; j < (kNumTests*numGPUs); j++) {
         if ((j % kNumTests == 0) && (j > 0)) {
           turn++; // assign to next worker
@@ -242,5 +252,3 @@ int main() {
 
   return 0;
 }
-
-
