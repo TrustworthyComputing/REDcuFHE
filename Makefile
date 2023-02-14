@@ -10,7 +10,7 @@ INC = -I./
 BOOST_INCLUDE = /usr/include
 BOOST_LIB = /usr/lib
 dir_guard = @mkdir -p $(@D)
-
+PREFIX = /usr/local
 ##
 DIR_BIN = bin
 DIR_OBJ = build
@@ -57,6 +57,34 @@ $(DIR_OBJ)/examples/multigpu_arithmetic_example.o: examples/multigpu_arithmetic_
 $(DIR_BIN)/libredcufhe.so: $(CU_OBJ) $(DIR_OBJ)/redcufhe.o $(DIR_OBJ)/redcufhe_io.o
 	$(dir_guard)
 	$(CU) $(FLAGS) $(CU_FLAGS) -shared -o $@ $(CU_OBJ) $(DIR_OBJ)/redcufhe.o $(DIR_OBJ)/redcufhe_io.o
+
+install:
+	install -d $(PREFIX)/lib
+	install -m 644 bin/libredcufhe.so $(PREFIX)/lib
+	install -d $(PREFIX)/include/REDcuFHE/
+	install -m 644 include/redcufhe.h $(PREFIX)/include/REDcuFHE/
+	install -m 644 include/cufhe_core.h $(PREFIX)/include/REDcuFHE/
+	install -m 644 include/redcufhe_bootstrap_gpu.cuh $(PREFIX)/include/REDcuFHE/
+	install -m 644 include/redcufhe_gpu.cuh $(PREFIX)/include/REDcuFHE/
+	install -d $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt_1024_device.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt_1024_twiddle.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt_conv_kind.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt_ffp.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt_shifting.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -m 644 include/ntt_gpu/ntt_single_thread.cuh $(PREFIX)/include/REDcuFHE/ntt_gpu/
+	install -d $(PREFIX)/include/REDcuFHE/details/
+	install -m 644 include/details/allocator.h $(PREFIX)/include/REDcuFHE/details/
+	install -m 644 include/details/allocator_gpu.cuh $(PREFIX)/include/REDcuFHE/details/
+	install -m 644 include/details/assert.h $(PREFIX)/include/REDcuFHE/details/
+	install -m 644 include/details/error_gpu.cuh $(PREFIX)/include/REDcuFHE/details/
+	install -m 644 include/details/math.h $(PREFIX)/include/REDcuFHE/details/
+	install -m 644 include/details/utils_gpu.cuh $(PREFIX)/include/REDcuFHE/details/
+
+uninstall:
+	rm -rf $(PREFIX)/include/REDcuFHE
+	rm $(PREFIX)/lib/libredcufhe.so
 
 $(CC_OBJ): $(CC_SRC)
 	$(dir_guard)
