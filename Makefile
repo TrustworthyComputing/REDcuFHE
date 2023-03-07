@@ -1,17 +1,13 @@
-## Compilers
 CC = g++
 CU = nvcc
-## Flags
 FLAGS = -std=c++11 -O3 -w
 CU_FLAGS = #-gencode=arch=compute_70,code=sm_70 -gencode=arch=compute_70,code=compute_70
 ##-Wno-deprecated-gpu-targets
 INC = -I./
-## Boost header files and library
 BOOST_INCLUDE = /usr/include
 BOOST_LIB = /usr/lib
 dir_guard = @mkdir -p $(@D)
 PREFIX = /usr/local
-##
 DIR_BIN = bin
 DIR_OBJ = build
 DIR_SRC = lib
@@ -25,16 +21,10 @@ CU_DEP = $(CU_OBJ:.o=.d)
 CC_OBJ = $(patsubst $(DIR_SRC)/%,$(DIR_OBJ)/%,$(CC_SRC:.cc=.o))
 CC_DEP = $(CC_OBJ:.o=.d)
 
-##
-targets: $(DIR_BIN)/libredcufhe.so \
-	$(DIR_BIN)/multigpu_gates_example \
-	$(DIR_BIN)/multigpu_arithmetic_example
+build: $(DIR_BIN)/libredcufhe.so $(DIR_BIN)/multigpu_gates_example $(DIR_BIN)/multigpu_arithmetic_example ## Build lib and examples
 
-##
-all: $(targets)
-gpu: $(DIR_BIN)/libredcufhe.so $(DIR_BIN)/multigpu_gates_example $(DIR_BIN)/multigpu_arithmetic_example
-clean:
-	rm -r $(DIR_BIN) $(DIR_OBJ)
+clean: ## Remove executables and object files
+	@rm -r $(DIR_BIN) $(DIR_OBJ) 2>/dev/null || true
 
 $(DIR_BIN)/multigpu_gates_example: $(DIR_OBJ)/examples/multigpu_gates_example.o
 	$(dir_guard)
@@ -58,7 +48,7 @@ $(DIR_BIN)/libredcufhe.so: $(CU_OBJ) $(DIR_OBJ)/redcufhe.o $(DIR_OBJ)/redcufhe_i
 	$(dir_guard)
 	$(CU) $(FLAGS) $(CU_FLAGS) -shared -o $@ $(CU_OBJ) $(DIR_OBJ)/redcufhe.o $(DIR_OBJ)/redcufhe_io.o
 
-install:
+install: ## Install lib to usr/local by default 
 	install -d $(PREFIX)/lib
 	install -m 644 bin/libredcufhe.so $(PREFIX)/lib
 	install -d $(PREFIX)/include/REDcuFHE/
@@ -82,7 +72,7 @@ install:
 	install -m 644 include/details/math.h $(PREFIX)/include/REDcuFHE/details/
 	install -m 644 include/details/utils_gpu.cuh $(PREFIX)/include/REDcuFHE/details/
 
-uninstall:
+uninstall: ## Completely uninstall library
 	rm -rf $(PREFIX)/include/REDcuFHE
 	rm $(PREFIX)/lib/libredcufhe.so
 
@@ -99,3 +89,8 @@ $(CU_OBJ): $(CU_SRC)
 			$(patsubst $(DIR_OBJ)/%,$(DIR_SRC)/%,$(@:%.o=%.cu))
 	$(CU) $(FLAGS) $(CU_FLAGS) $(INC) -c -o $@ \
 			$(patsubst $(DIR_OBJ)/%,$(DIR_SRC)/%,$(@:%.o=%.cu)) -Xcompiler '-fPIC'
+
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.DEFAULT_GOAL := help
